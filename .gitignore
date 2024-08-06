@@ -1,0 +1,26 @@
+# Add any directories, files, or patterns you don't want to be tracked by version control
+*.o
+*.d
+*.a
+*~
+*#
+.DS*
+*.swp
+*.aux
+*.bbl
+*.log
+*.out
+*.gz
+*.bin
+*.blg
+*-eps-converted-to.pdf
+build
+*0.eps
+*.pdf
+*.fdb_latexmk
+*.fls
+*.thm
+*/.vscode/*
+
+*.docx
+*.json
