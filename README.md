@@ -55,11 +55,11 @@ Pandoc is an open-source project and is available for Windows, macOS, and Linux.
 
 Pandoc follows a modular architecture that separates the parsing, transformation, and rendering stages, allowing for flexibility and extensibility.
 
-$$ \text{input document} \rightarrow \text{abstract syntax tree (AST)} \xrightarrow{\text{user-defined filter}} \text{new AST} \rightarrow \text{output document} $$
+$$ \text{input document} \longrightarrow \text{abstract syntax tree (AST)} \stackrel{\text{filter}}{\longrightarrow} \text{new AST} \longrightarrow \text{output document} $$
 
 Pandoc works by parsing the input document, which can be written in various markup formats such as Markdown, HTML, LaTeX, or even word processing formats like DOCX. It then transforms the parsed document into an **abstract syntax tree (AST)**, which represents the structure and content of the document in a standardized format.
 
-While Pandoc takes care of the conversion between documents and AST, which gives the basic performance, to achieve better output, we have to design custumized filter. In principle, you can manage the AST totally by yourself with only an interface with Pandoc, but it could be a tedious work. **Thus, here we utilize a Python package called Panflute to simplify the design process of the custumized filter.** 
+While Pandoc takes care of the conversion between documents and AST, which gives the basic performance, to achieve better output, we have to design customized filter. In principle, you can manage the AST totally by yourself with only an interface with Pandoc, but it could be a tedious work. **Thus, here we utilize a Python package called Panflute to simplify the design process of the customized filter.** 
 
 -----------------------------------------------------------------------------
 
@@ -75,15 +75,15 @@ While Pandoc takes care of the conversion between documents and AST, which gives
 
 - Do not use commands that pandoc can not handle
 
-    For exmaple, `\begin{figure*} \end{figure*}` could not be understood by pandoc and you should change it into `\begin{figure} \end{figure}`.
+    For example, `\begin{figure*} \end{figure*}` could not be understood by pandoc and you should change it into `\begin{figure} \end{figure}`.
 
-- Most of the layout design and setting will be destory during the conversion
+- Most of the layout design and setting will be destroyed during the conversion
 
     Some manually setting in docx file may be necessary. You'd better understand some layout setting methods of docx.
 
 - Be careful with the line break and indentation of paragraph in docx
 
-    Pandoc doesn't know that after a latex environment such as `equation`, `enumerate`, whether it should start a new paragrah or not. And in fact it starts a new paragraph in all circumstances. This phenomenon leads to a difference if the paragraghs are required to start with an indent. You may need to manually fix this issue in the docx file or write a more careful filter function to add indent for each paragraph.
+    Pandoc doesn't know that after a latex environment such as `equation`, `enumerate`, whether it should start a new paragraph or not. And in fact it starts a new paragraph in all circumstances. This phenomenon leads to a difference if the paragraphs are required to start with an indent. You may need to manually fix this issue in the docx file or write a more careful filter function to add indent for each paragraph.
 
 ------------------------------------------------------------------------------------
 
@@ -101,6 +101,7 @@ In this guide we use
 
 Note: The code may get wrong under different configurations.
 
+-----------------------------------------------------------------------------------
 
 ## Plain pandoc
  
@@ -115,7 +116,7 @@ This is the basic command of pandoc to convert latex into docx. Remember to prov
 
 **Add template docx file**
 
-One can provide a custumized docx file as a template to guide the conversion process of pandoc by the command below:
+One can provide a customized docx file as a template to guide the conversion process of pandoc by the command below:
 ``` sh
 pandoc "$input_file" --from latex --to docx \
     --citeproc --bibliography "$bibliography_file" \
@@ -134,7 +135,7 @@ pandoc "$input_file" --from latex --to docx \
     --resource-path "$figures_dir" \
     -o "$output_file"
 ```
-You could write your own CLS file following the instruction of [CSL](https://citationstyles.org/). You can also search for the required CLS file that you need. Below are some helpful website providing such templates (Some of them may not work directly and you need to make some modification). 
+You could write your own CLS file following the instruction of [CSL](https://citationstyles.org/). You can also search for the required CLS file that you need. Below are some helpful websites providing such templates (Some of them may not work directly and you need to make some modification). 
 
 - [English styles](https://github.com/citation-style-language/styles)
 
@@ -154,7 +155,7 @@ pandoc "$input_file" --from latex+raw_tex --to docx \
     -o "$output_file"
 ```
 
-To add custumized filter to the conversion of pandoc, we have to get into the internal with abstract syntax tree (AST). AST is a general representation on which pandoc operates. The reader component will convert the input form to the corresponding AST format. And the writer component of pandoc does not know about the input form, it works on AST directly. This allows pandoc to make conversion between different forms.
+To add customized filter to the conversion of pandoc, we have to get into the internal with abstract syntax tree (AST). AST is a general representation on which pandoc operates. The reader component will convert the input form to the corresponding AST format. And the writer component of pandoc does not know about the input form, it works on AST directly. This allows pandoc to make conversion between different forms.
 
 Pandoc can output the internal AST temporarily to a JSON file, and we further use python to refactor the JSON file to make it human readable. The bash command goes like: 
 ``` sh
@@ -166,7 +167,7 @@ python3 -m json.tool AST.json > formatted_AST.json
 
 **NOTE: input format `latex+raw_tex` means that to keep all the latex commands that pandoc doesn't understand unchanged in the AST. This option is necessary for those filters later.**
 
-For example, you will something like this in the formatted JSON file of AST:
+For example, you will see something like this in the formatted JSON file of AST:
 ``` json
 "abstract": {
     "t": "MetaBlocks",
@@ -191,7 +192,7 @@ For example, you will something like this in the formatted JSON file of AST:
 },
 ```
 
-To modify some of the elements in the JSON file, we utilize functions from python package Panflute. Each leaves (and the root) of the abstract syntax tree (AST) is an instance of the base class of panflute called `Elemenet`. And a standard filter of panflute looks like:
+To modify some of the elements in the JSON file, we utilize functions from python package Panflute. Each leaves (and the root) of the abstract syntax tree (AST) is an instance of the base class of panflute called `Element`. And a standard filter of panflute looks like:
 ``` py
 import panflute as pf
 def filter_name(elem: pf.Element, doc: pf.Doc):
@@ -209,7 +210,7 @@ print('text', file=sys.stderr)
 
 ### Headers
 
-Plain pandoc will not add section number for each header since they actually not appear in the latex file. Thus, we have to compute the section number for the headers in format "1.1.1 Header text". You can also change it to any other type of the headers. To achieve this, we introduce a stack to manage the serial numbers in different section levels. Then we can fix the text of the original header by appending the section numbers.
+Plain pandoc will not add section number for each header since they actually not appear in the latex file. Thus, we have to compute the section number for the headers in format "1.1.1 Header text". You can also change it to any other type of the headers. To achieve this, we introduce a stack to manage the serial numbers in different section levels. Then we can fix the text of the original header by adding the section numbers.
 
 Besides, plain pandoc will not add the heading of the reference section. Thus we have to write a filter to add the heading of reference in format "References".
 
@@ -218,16 +219,16 @@ Besides, plain pandoc will not add the heading of the reference section. Thus we
 
 Figures in PDF format is not acceptable in pandoc. You have to convert them into PNG or JPEG format in advanced.
 
-Both figures and tables are floats in latex file without serial numbers. We utilize some global dictinoaries to store their serial number and then add the serial numbers to their captions like "Figure 1: Caption". You can change the format to another type you want.
+Both figures and tables are floats in latex file without serial numbers. We utilize some global dictionaries to store their serial numbers and then add the serial numbers to their captions like "Figure 1: Caption". You can change the format to another type you want.
 
-We remark that the setting of latex environments for figure and table can not be understood by pandoc and the convesion of figure (table) setting in AST to docx file is also not supported. Thus, you have to  resize the figures and fix the style setting of figure and tables in docx file manually if necessary. 
+We remark that the setting of latex environments for figure and table can not be understood by pandoc and the conversion of figure (table) setting in AST to docx file is also not supported. Thus, you have to  resize the figures and fix the style setting of figures and tables in docx file manually if necessary. 
 
 
 ### Math equations
 
-Plain pandoc can not manage the label and cross reference of equations. Thus, we will number those equations with labels in format "(section.equation)" and resolve their reference.
+Plain pandoc can not manage the label and cross reference of equations. Thus, we need to number those equations with labels in format "(section.equation)" and resolve their reference.
 
-We emphasize that only those labeled equation will be numbered, if you want to number all the equations even if some of them not being labeled, you need to fix some code by yourself.
+We emphasize that only those labeled equations will be numbered, if you want to number all the equations even if some of them not being labeled, you need to fix some code by yourself.
 
 To add equation number in docx format, you have to add the number with a `#` at the end of the latex command for the equation in AST like,
 ``` tex
@@ -252,18 +253,18 @@ Then you will get something like this:
 
 Plain pandoc can not handle the `\ref` or `\eqref` command in latex to give the correct serial number. Hence we have to define a filter function to replace the original labels to their serial numbers. Note that we have extracted the serial numbers of headers, figures, tables and equations and saved them in corresponding python dictionaries. Now we only need to find out those labels being referred and replaced them based on their types and labels. 
 
-The cross reference of equations uses `eqref` command, which is different with the `\ref` command for headers, figures, etc. Thus, we separate them into different functions. We highlight that for different types of environments not including, you should write another filter function for them. Here we only give the example for Theorem environment, if you use Lemma environment, you should add a function to number the lemmas and resolve the cross reference.
+The cross reference of equations uses `eqref` command, which is different with the `\ref` command for headers, figures, etc. Thus, we separate them into different functions. We highlight that for different types of environments not including, you should write other filter functions for them. Here we only give the example for Theorem environment, if you use Lemma environment, you should add a function to number the lemmas and resolve the cross reference.
 
 
 ### Indentation
 
-Indentation is not necessary when writting documents. Pandoc will not add indent for each paragragh in the content. But we still provide an option to add indent before the first line of each paragragh. You should turn on the switch in the python code, i.e., `is_paragragh_with_indent = True`.
+Indentation is not necessary when writing documents. Pandoc will not add indent for each paragraph in the content. But we still provide an option to add indent at the first line of each paragraph. You should turn on the switch in the python code, i.e., `is_paragraph_with_indent = True`.
 
-There are different setting of the length of the indentation. You can change the indent in the filter function to any format you want. 
+There are different settings of the length of the indentation. You can change the indent in the filter function to any format you want. 
 
-But we emphasize that pandoc can not handle the line break and start of new paragragh perfectly. You may still need some manual adjustment after the conversion.
+But we emphasize that pandoc can not handle the line break and start of new paragraph perfectly. You may still need some manual adjustments after the conversion.
 
 
 ### Others ...
 
-You could add any other filter to fix your problems and achieve a better output, but some mannual modification in docx file may not be avoided.
+You could add any other filter to fix your problems and achieve a better output, but some manual modification in docx file may not be avoided.

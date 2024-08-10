@@ -271,13 +271,13 @@ def resolve_equation_reference(elem: pf.Element, doc: pf.Doc) -> pf.Str | None:
 # *****************************************************************************
 
 # FIXME: The switch of indenting the first line of each paragraph.
-is_paragragh_with_indent = False
+is_paragraph_with_indent = False
 
 def indent_paragraph(elem: pf.Element, doc: pf.Doc) -> pf.Element:
     """
     Indent the first line of paragraphs in abstract and main body.
     """
-    if is_paragragh_with_indent:
+    if is_paragraph_with_indent:
         # FIXME: format of the indentation
         indent = '        '
         if isinstance(elem, pf.Para):
